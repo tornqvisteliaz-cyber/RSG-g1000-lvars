@@ -173,7 +173,14 @@
     'REJECT': 147,
     'SET': 148,
     'SYNC': 149,
-    'HDG SYNC': 150
+    'HDG SYNC': 150,
+    'NEAREST': 151,
+    'MAP/HSI': 152,
+    'TFC MAP': 153,
+    'TMR/REF': 154,
+    'LAYOUT': 155,
+    'REL TER': 156,
+    'LIGHTNING': 157,
   };
 
   var last = {};
@@ -220,6 +227,7 @@
     var index = 1;
     var m = href.match(/[?&]Index=(\d+)/i);
     if (m) index = parseInt(m[1], 10) || 1;
+    // Second PFD is commonly Index=3 when MFD is Index=2. Keep the raw index.
     return { side: side, index: index };
   }
 
@@ -247,42 +255,30 @@
     var nodes = [];
     try {
       nodes = Array.prototype.slice.call(document.querySelectorAll(
-        '.softkeys-container > .softkey-tab, .SoftKeys > .softkey-tab'
+        '.softkey-tab'
       ));
-      if (!nodes.length) {
-        nodes = Array.prototype.slice.call(document.querySelectorAll('.softkey-tab'));
-      }
     } catch (e) {
       return [];
     }
-    var tops = nodes.filter(function (n) {
-      return !nodes.some(function (other) { return other !== n && other.contains(n); });
+    console.log(nodes);
+
+    var softkeys = nodes.map(function (node) {
+      var labelNode = node.querySelector('.softkey-tab-label');
+      var indicatorNode = node.querySelector('.softkey-tab-indicator');
+
+      var label = labelNode.textContent.replace(/\s+/g, ' ').trim().toUpperCase();
+
+      return {
+        label: label,
+        enabled: !node.classList.contains('text-disabled'),
+        ind: indicatorNode
+          ? indicatorNode.classList.contains('shown')
+          : false
+      };
     });
-    tops = tops.map(function (n) {
-      var box = { left: 0, top: 0 };
-      try { box = n.getBoundingClientRect(); } catch (e) {}
-      return { node: n, left: box.left || 0, top: box.top || 0 };
-    });
-    if (tops.length > KEYS) {
-      var bottom = tops.reduce(function (max, item) {
-        return item.top > max ? item.top : max;
-      }, 0);
-      var row = tops.filter(function (item) { return Math.abs(item.top - bottom) < 8; });
-      tops = row.length >= KEYS ? row : tops;
-    }
-    tops.sort(function (a, b) { return a.left - b.left; });
-    if (tops.length > KEYS) tops = tops.slice(0, KEYS);
-    var out = [];
-    for (var i = 0; i < KEYS; i++) {
-      var node = tops[i] && tops[i].node;
-      var label = node ? textOf(node) : '';
-      var disabled = node ? /text-disabled|disabled|grey|gray/i.test(String(node.className || '')) : true;
-      var ind = 0;
-      if (node && flag(node, /highlighted|indicating/i)) ind = 2;
-      else if (node && flag(node, /indicating-dim/i)) ind = 1;
-      out.push({ label: label, enabled: node ? (disabled ? 0 : 1) : 0, ind: ind });
-    }
-    return out;
+
+    console.log(softkeys);
+    return softkeys;
   }
 
   function readMenu(menuSystem) {
@@ -300,6 +296,7 @@
       var enabled = 0;
       var ind = 0;
       if (item) {
+        console.log('')
         var raw = item.label;
         if (raw && typeof raw.get === 'function') label = String(raw.get() || '');
         else if (typeof raw === 'string') label = raw;
@@ -344,6 +341,7 @@
   }
 
   function boot(menuSystem) {
+    console.log('boot');
     if (started) return;
     started = true;
     var unit = detectUnit();
@@ -351,6 +349,7 @@
     setL('G1000_SK_BRIDGE', 1);
 
     function frame() {
+      console.log('frame');
       var fromMenu = readMenu(menuSystem);
       var keys = fromMenu || readDom();
       publish(unit, keys);
@@ -383,6 +382,7 @@
   };
 
   function register() {
+    console.log('registering...');
     var sdk = window.msfssdk || window.garminsdk || window.msfsSdk || null;
     if (sdk && typeof sdk.registerPlugin === 'function') {
       if (sdk.AvionicsPlugin) {
@@ -406,6 +406,7 @@
   }
 
   try { register(); } catch (e) {}
+  // Script is evaluated inside the instrument view. Poll even if registration is ignored.
   if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', function () { boot(null); });
