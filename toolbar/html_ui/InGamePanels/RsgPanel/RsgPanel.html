@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <link rel="stylesheet" href="/SCSS/common.css" />
+  <link rel="stylesheet" href="RsgPanel.css" />
+  <script type="text/javascript" src="/JS/coherent.js"></script>
+  <script type="text/javascript" src="/JS/common.js"></script>
+  <script type="text/javascript" src="/JS/dataStorage.js"></script>
+  <script type="text/javascript" src="/JS/simvar.js"></script>
+  <script type="text/javascript" src="/JS/Services/ToolBarPanels.js"></script>
+  <script type="text/javascript" src="RsgPanel.js"></script>
+</head>
+<body class="border-box">
+  <ingamepanel-rsg>
+    <ingame-ui id="RsgPanel" panel-id="RSG_PANEL" title="RSG" class="ingameUiFrame" content-fit="true" min-width="420" min-height="280">
+      <section id="MainDisplay">
+        <h1>Welcome to RSG</h1>
+        <p id="rsg-status">Open a flight, then press Refresh.</p>
+        <div id="rsg-list"></div>
+      </section>
+      <section id="Footer">
+        <button id="rsg-refresh" type="button">Refresh VATSIM</button>
+        <button id="rsg-com2" type="button">Tune COM2</button>
+      </section>
+    </ingame-ui>
+  </ingamepanel-rsg>
+</body>
+</html>
